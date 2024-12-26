@@ -8,7 +8,10 @@ SIZE = 5
 
 print(dice())
 
-board = [[Space(0, False) for _ in range(SIZE)] for _ in range(SIZE)]
+board = [
+    [Space(0, False) for _ in range(SIZE)]
+    for _ in range(SIZE)
+]
 
 def empty() -> bool:
     for row in board:
@@ -57,7 +60,31 @@ def space_str(space: Space) -> str:
             return f'{space.value:2}'
     else:
         return '  '
-    
+
+def col_full(i: int) -> bool:
+    for row in board:
+        if not row[i].circled:
+            return False
+    return True
+
+def row_full(i: int) -> bool:
+    for cell in board[i]:
+        if not cell.circled:
+            return False
+    return True
+
+def uldr_full() -> bool:
+    for i in range(SIZE):
+        if not board[i][i].circled:
+            return False
+    return True
+
+def urdl_full() -> bool:
+    s = SIZE - 1
+    for i in range(SIZE):
+        if not board[i][s - i].circled:
+            return False
+    return True
 
 def draw():
     print('10  9  8  7  6  5 10')
