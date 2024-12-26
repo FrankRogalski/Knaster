@@ -3,20 +3,25 @@ from termcolor import colored as c
 import ctypes
 import pathlib
 
-cknaster =ctypes.CDLL(pathlib.Path().absolute() / 'knaster.so')
-cknaster.init_board.restype = ctypes.c_char_p
-cknaster.init_scores.restype = ctypes.c_char_p
-cknaster.set_cell.argtypes= (ctypes.c_char_p, ctypes.c_ubyte, ctypes.c_ubyte, ctypes.c_ubyte)
+SIZE = 5
+bt = (ctypes.c_ubyte * (SIZE * SIZE))
+st = (ctypes.c_bool * (SIZE * 2 + 2))
+cknaster = ctypes.CDLL(pathlib.Path().absolute() / 'knaster.so')
+cknaster.init_board.restype = bt
+cknaster.init_scores.restype = st
+cknaster.set_cell.argtypes= (bt, ctypes.c_ubyte, ctypes.c_ubyte, ctypes.c_ubyte)
 cknaster.set_cell.restype = ctypes.c_byte
-cknaster.update_score.argtypes = (ctypes.c_char_p, ctypes.c_ubyte, ctypes.c_ubyte, ctypes.c_char_p)
+cknaster.update_score.argtypes = (bt, ctypes.c_ubyte, ctypes.c_ubyte, st)
 cknaster.update_score.restype = ctypes.c_ushort
-cknaster.finished.argtypes = (ctypes.c_char_p,)
+cknaster.finished.argtypes = (bt,)
 cknaster.finished.restype = ctypes.c_bool
-cknaster.count_points.argtypes= (ctypes.c_char_p, ctypes.c_char_p)
+cknaster.count_points.argtypes= (bt, st)
 cknaster.count_points.restype = ctypes.c_ubyte
 
 dice = lambda: randrange(1, 7) + randrange(1, 7)
-SIZE = 5
+
+board = cknaster.init_board()
+scores = cknaster.init_scores()
 
 def user_input(value: int) -> str:
     while True:
@@ -42,12 +47,12 @@ def user_input(value: int) -> str:
 
         return x, y
 
-def space_str(space: Space) -> str:
-    if space.value != 0:
-        if space.circled:
-            return c(f'{space.value:2}', 'red')
+def space_str(space: int) -> str:
+    if space != 0:
+        if space >= 128:
+            return c(f'{space & 0b1111:2}', 'red')
         else:
-            return f'{space.value:2}'
+            return f'{space:2}'
     else:
         return '  '
 
@@ -55,16 +60,19 @@ def draw():
     print('10  9  8  7  6  5 10')
     print('  +--------------+')
     start = 9
-    for i, row in enumerate(board):
-        numbers = ' '.join(map(space_str, row))
-        print(f'{i:2}|{numbers}|{start - i:2}')
+    for y in range(SIZE):
+        numbers = ' '.join(map(lambda x: space_str(board[y * SIZE + x]), range(SIZE)))
+        print(f'{y:2}|{numbers}|{start - y:2}')
     print('  +--------------+')
     print('    0  1  2  3  4 ')
 
-while empty():
+while not cknaster.finished(board):
     d = dice()
     draw()
     x, y = user_input(d)
-    board[y][x] = Space(d, board[y][x].value != 0)
+    cknaster.set_cell(board, x, y, d)
+    cknaster.update_score(board, x, y, scores)
     print()
 
+score = cknaster.count_points(board, scores)
+print(f'your final score is {score}')

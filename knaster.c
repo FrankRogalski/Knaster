@@ -4,20 +4,12 @@
 #define SIZE 5
 
 extern uint8_t *init_board() {
-  uint8_t *board = malloc(SIZE * SIZE);
-  for (int i = 0; i < SIZE * SIZE; i++) {
-    board[i] = 0;
-  }
-  return board;
+  return calloc(SIZE * SIZE, sizeof(uint8_t));
 }
 // rrrrrcccccdd
 // uldr first
 extern bool *init_scores() {
-  bool *scores = malloc(SIZE * 2 + 2);
-  for (int i = 0; i < SIZE * 2 + 2; i++) {
-    scores[i] = 0;
-  }
-  return scores;
+  return calloc(SIZE * 2 + 2, sizeof(bool));
 }
 
 extern int8_t set_cell(uint8_t *board, uint8_t x, uint8_t y, uint8_t value) {
