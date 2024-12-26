@@ -1,24 +1,22 @@
 from random import randrange
-from collections import namedtuple
 from termcolor import colored as c
+import ctypes
+import pathlib
+
+cknaster =ctypes.CDLL(pathlib.Path().absolute() / 'knaster.so')
+cknaster.init_board.restype = ctypes.c_char_p
+cknaster.init_scores.restype = ctypes.c_char_p
+cknaster.set_cell.argtypes= (ctypes.c_char_p, ctypes.c_ubyte, ctypes.c_ubyte, ctypes.c_ubyte)
+cknaster.set_cell.restype = ctypes.c_byte
+cknaster.update_score.argtypes = (ctypes.c_char_p, ctypes.c_ubyte, ctypes.c_ubyte, ctypes.c_char_p)
+cknaster.update_score.restype = ctypes.c_ushort
+cknaster.finished.argtypes = (ctypes.c_char_p,)
+cknaster.finished.restype = ctypes.c_bool
+cknaster.count_points.argtypes= (ctypes.c_char_p, ctypes.c_char_p)
+cknaster.count_points.restype = ctypes.c_ubyte
 
 dice = lambda: randrange(1, 7) + randrange(1, 7)
-Space = namedtuple('Space', ['value', 'circled'])
 SIZE = 5
-
-print(dice())
-
-board = [
-    [Space(0, False) for _ in range(SIZE)]
-    for _ in range(SIZE)
-]
-
-def empty() -> bool:
-    for row in board:
-        for space in row:
-            if space.value == 0:
-                return True
-    return False
 
 def user_input(value: int) -> str:
     while True:
@@ -42,14 +40,6 @@ def user_input(value: int) -> str:
             print(f'one of the numbers is not in the range 0 to {SIZE}')
             continue
 
-        if board[y][x].value not in (0, value):
-            print('space already filled')
-            continue
-
-        if board[y][x].circled == True:
-            print('space already circled')
-            continue
-
         return x, y
 
 def space_str(space: Space) -> str:
@@ -60,31 +50,6 @@ def space_str(space: Space) -> str:
             return f'{space.value:2}'
     else:
         return '  '
-
-def col_full(i: int) -> bool:
-    for row in board:
-        if not row[i].circled:
-            return False
-    return True
-
-def row_full(i: int) -> bool:
-    for cell in board[i]:
-        if not cell.circled:
-            return False
-    return True
-
-def uldr_full() -> bool:
-    for i in range(SIZE):
-        if not board[i][i].circled:
-            return False
-    return True
-
-def urdl_full() -> bool:
-    s = SIZE - 1
-    for i in range(SIZE):
-        if not board[i][s - i].circled:
-            return False
-    return True
 
 def draw():
     print('10  9  8  7  6  5 10')
