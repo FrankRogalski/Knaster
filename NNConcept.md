@@ -4,6 +4,7 @@
 * 11 * 25 current numbers
 * 25 marked numbers
 * 25 empty fields (maybe they can be implicit, but i think its better for performance if they are not?)
+* 4 what straight to select (row, column, uldr, urdl)
 * 25 possible fields to mark (if any)
 * 1 number of fields to mark 
 ** maybe in increments of 0.2 since here the closeness of the number actually means something?

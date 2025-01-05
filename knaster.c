@@ -6,13 +6,16 @@
 #define SIZE 5
 #define AREA SIZE *SIZE
 #define SCRORE_SIZE SIZE * 2 + 2
+#define CELL_SELECTOR_SIZE 4
 #define MAX_INDEX SIZE - 1
 
 extern uint8_t *init_board() { return calloc(AREA, sizeof(uint8_t)); }
 // rrrrrcccccdd
 // uldr first
 extern bool *init_scores() { return calloc(SCRORE_SIZE, sizeof(bool)); }
-extern bool *init_cell_selector() { return calloc(SCRORE_SIZE, sizeof(bool)); }
+// rcdd
+// uldr first
+extern bool *init_cell_selector() { return calloc(CELL_SELECTOR_SIZE, sizeof(bool)); }
 extern bool *init_field_selector() { return calloc(AREA, sizeof(bool)); }
 
 bool check(uint8_t x, uint8_t y, uint8_t *board,
@@ -45,7 +48,7 @@ extern int8_t set_cell(uint8_t *board, uint8_t x, uint8_t y, uint8_t value,
     return -2;
   }
 
-  for (int i = 0; i < SCRORE_SIZE; i++) {
+  for (int i = 0; i < CELL_SELECTOR_SIZE; i++) {
     cell_selector[i] = false;
   }
 
@@ -55,16 +58,16 @@ extern int8_t set_cell(uint8_t *board, uint8_t x, uint8_t y, uint8_t value,
     board[y * SIZE + x] = value;
   }
 
-  cell_selector[x] = check(x, y, board, x_index);
+  cell_selector[0] = check(x, y, board, x_index);
   scores[x] = scores[0];
-  cell_selector[5 + y] = check(x, y, board, y_index);
+  cell_selector[1] = check(x, y, board, y_index);
   scores[y + 5] = cell_selector[1];
   if (x == y && check(x, y, board, uldr_index)) {
-    cell_selector[AREA] = true;
+    cell_selector[2] = true;
     scores[AREA] = true;
   }
   if (x == MAX_INDEX - y && check(x, y, board, urdl_index)) {
-    cell_selector[AREA + 1] = true;
+    cell_selector[3] = true;
     scores[AREA + 1] = true;
   }
 
@@ -114,13 +117,7 @@ extern uint8_t get_fields_for_cell_selection(uint8_t cell_selection, uint8_t x,
   uint8_t indexes[SIZE];
   uint8_t free_fields = 0;
   for (int i = 0; i < SIZE; i++) {
-    uint8_t index;
-    if (cell_selection == AREA + 1) {
-      index = 3;
-    } else {
-      index = cell_selection / SIZE;
-    }
-    indexes[i] = index_functions[index](x, y, i);
+    indexes[i] = index_functions[cell_selection](x, y, i);
     values[i] = board[indexes[i]];
     if (values[i] < 128) {
       field_selectors[indexes[i]] = true;
