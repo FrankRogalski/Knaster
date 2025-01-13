@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 
@@ -15,11 +16,21 @@ extern uint8_t *init_board() { return calloc(AREA, sizeof(uint8_t)); }
 extern bool *init_scores() { return calloc(SCRORE_SIZE, sizeof(bool)); }
 // rcdd
 // uldr first
-extern bool *init_cell_selector() { return calloc(CELL_SELECTOR_SIZE, sizeof(bool)); }
+extern bool *init_cell_selector() {
+  return calloc(CELL_SELECTOR_SIZE, sizeof(bool));
+}
 extern bool *init_field_selector() { return calloc(AREA, sizeof(bool)); }
 
 bool check(uint8_t x, uint8_t y, uint8_t *board,
            uint8_t (*function)(uint8_t, uint8_t, uint8_t)) {
+  if (x >= SIZE) {
+    printf("x out of bounds in check");
+    exit(1);
+  }
+  if (y >= SIZE) {
+    printf("y out of bounds in check");
+    exit(1);
+  }
   for (int i = 0; i < SIZE; i++) {
     if (board[function(x, y, i)] < 128) {
       return false;
@@ -28,10 +39,40 @@ bool check(uint8_t x, uint8_t y, uint8_t *board,
   return true;
 }
 
-uint8_t x_index(uint8_t x, uint8_t y, uint8_t i) { return x * SIZE + i; }
-uint8_t y_index(uint8_t x, uint8_t y, uint8_t i) { return i * SIZE + y; }
-uint8_t uldr_index(uint8_t x, uint8_t y, uint8_t i) { return i * SIZE + i; }
+uint8_t x_index(uint8_t x, uint8_t y, uint8_t i) {
+  if (y >= SIZE) {
+    printf("y out of bounds in x_index");
+    exit(1);
+  }
+  if (i >= SIZE) {
+    printf("i out of bounds in x_index");
+    exit(1);
+  }
+  return y * SIZE + i;
+}
+uint8_t y_index(uint8_t x, uint8_t y, uint8_t i) {
+  if (x >= SIZE) {
+    printf("x out of bounds in y_index");
+    exit(1);
+  }
+  if (i >= SIZE) {
+    printf("i out of bounds in y_index");
+    exit(1);
+  }
+  return i * SIZE + x;
+}
+uint8_t uldr_index(uint8_t x, uint8_t y, uint8_t i) {
+  if (i >= SIZE) {
+    printf("i out of bounds in uldr_index");
+    exit(1);
+  }
+  return i * SIZE + i;
+}
 uint8_t urdl_index(uint8_t x, uint8_t y, uint8_t i) {
+  if (i >= SIZE) {
+    printf("i out of bounds in urdl_index");
+    exit(1);
+  }
   return i * SIZE + (MAX_INDEX - i);
 }
 uint8_t (*index_functions[4])(uint8_t, uint8_t, uint8_t) = {
@@ -41,12 +82,18 @@ uint8_t (*index_functions[4])(uint8_t, uint8_t, uint8_t) = {
 // urdl last
 extern int8_t set_cell(uint8_t *board, uint8_t x, uint8_t y, uint8_t value,
                        bool *scores, bool *cell_selector) {
-  if (y * SIZE + x >= AREA) {
+  if (y * SIZE + x >= AREA)
     return -1;
-  }
-  if (board[y * SIZE + x] != 0 && board[y * SIZE + x] != value) {
+  if (board[y * SIZE + x] != 0 && board[y * SIZE + x] != value)
     return -2;
-  }
+  if (x >= SIZE)
+    return -3;
+  if (y >= SIZE)
+    return -4;
+  if ((value & 0b10001111) != value)
+    return -5;
+  if ((value & 0b1111) > 12)
+    return -6;
 
   for (int i = 0; i < CELL_SELECTOR_SIZE; i++) {
     cell_selector[i] = false;
@@ -90,7 +137,7 @@ void sort_values(uint8_t *values, uint8_t size) {
 }
 
 bool is_street(uint8_t *values) {
-  uint8_t sorted_values[5];
+  uint8_t sorted_values[SIZE];
   for (int i = 0; i < SIZE; i++) {
     sorted_values[i] = values[i] & 0b1111;
   }
@@ -106,16 +153,23 @@ bool is_street(uint8_t *values) {
 
 int8_t min(int8_t a, int8_t b) { return a < b ? a : b; }
 
-extern uint8_t get_fields_for_cell_selection(uint8_t cell_selection, uint8_t x,
-                                             uint8_t y, uint8_t *fields,
-                                             uint8_t *board,
-                                             bool *field_selectors) {
+extern int8_t get_fields_for_cell_selection(uint8_t cell_selection, uint8_t x,
+                                            uint8_t y, uint8_t *fields,
+                                            uint8_t *board,
+                                            bool *field_selectors) {
+  if (cell_selection >= CELL_SELECTOR_SIZE)
+    return -1;
+  if (x >= SIZE)
+    return -2;
+  if (y >= SIZE)
+    return -3;
+
   for (int i = 0; i < AREA; i++) {
     field_selectors[i] = false;
   }
   uint8_t values[SIZE];
   uint8_t indexes[SIZE];
-  uint8_t free_fields = 0;
+  int8_t free_fields = 0;
   for (int i = 0; i < SIZE; i++) {
     indexes[i] = index_functions[cell_selection](x, y, i);
     values[i] = board[indexes[i]];
