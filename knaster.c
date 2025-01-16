@@ -78,8 +78,6 @@ uint8_t urdl_index(uint8_t x, uint8_t y, uint8_t i) {
 uint8_t (*index_functions[4])(uint8_t, uint8_t, uint8_t) = {
     x_index, y_index, uldr_index, urdl_index};
 
-// rcdd
-// urdl last
 extern int8_t set_cell(uint8_t *board, uint8_t x, uint8_t y, uint8_t value,
                        bool *scores, bool *cell_selector) {
   if (y * SIZE + x >= AREA)
